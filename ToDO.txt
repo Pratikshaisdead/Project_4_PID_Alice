@@ -1,0 +1,6 @@
+To-DO:
+google sklearn train validation split (try that out)
+
+next tune hyperparameters of models
+
+google sklearn gridsearch of hyperparameters
