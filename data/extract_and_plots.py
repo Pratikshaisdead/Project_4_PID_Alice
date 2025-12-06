@@ -123,7 +123,7 @@ def plot_from_df(variable_x, variable_y, df,save_appendix=""):
     ax[1].set_xlim(0.1,70)
     # fig.colorbar(hists[3], ax=ax[1]) 
     
-    folder = r'data\energy_loss'
+    folder = r'Plots\energy_loss'
     fig.suptitle(variable_x+" VS "+variable_y)
     file_name = folder+variable_x+"_"+variable_y+save_appendix+".png"
     plt.savefig(file_name,dpi=500)
@@ -132,9 +132,9 @@ def plot_from_df(variable_x, variable_y, df,save_appendix=""):
     end = time.time()
     print(end-start)
 
-plot_from_df("pT", "dEdxTPC", particle_df)
+# plot_from_df("pT", "dEdxTPC", particle_df)
 # plot_from_df("pT", "dEdxTPC", low_momentum_df,"_LowMomentum")
-# plot_from_df("pT", "dEdxTPC", high_momentum_df,"_HighMomentum")
+plot_from_df("pT", "dEdxTPC", high_momentum_df,"_HighMomentum")
 
 # Simple Classifier
 
