@@ -3,11 +3,11 @@ import matplotlib.pyplot as plt
 
 # --- 1. Load Data Directly ---
 # We use library='np' so we can plot immediately without extra conversion steps
-kaons     = uproot.open("Kaons.root")["data;1"].arrays(library='np')
-pions     = uproot.open("Pions.root")["data;1"].arrays(library='np')
-protons   = uproot.open("Protons.root")["data;1"].arrays(library='np')
-electrons = uproot.open("Electrons.root")["data;1"].arrays(library='np')
-deuterons = uproot.open("Deuterons.root")["data;1"].arrays(library='np')
+kaons     = uproot.open("data\Kaons.root")["data;1"].arrays(library='np')
+pions     = uproot.open("data\Pions.root")["data;1"].arrays(library='np')
+protons   = uproot.open("data\Protons.root")["data;1"].arrays(library='np')
+electrons = uproot.open("data\Electrons.root")["data;1"].arrays(library='np')
+deuterons = uproot.open("data\Deuterons.root")["data;1"].arrays(library='np')
 
 # --- 2. Configuration for Histogram Plots ---
 # Defining all particles and their colors centrally for the histograms
