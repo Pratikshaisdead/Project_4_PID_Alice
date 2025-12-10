@@ -1,6 +1,10 @@
 To-DO:
+03/12
 google sklearn train validation split (try that out)
-
 next tune hyperparameters of models
-
 google sklearn gridsearch of hyperparameters
+
+10/12
+train data in ranges (since electron data is in exponential)
+choose one classifier (maybe gbc/xgboost)
+look into optuna
