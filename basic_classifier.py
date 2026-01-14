@@ -21,16 +21,21 @@ from sklearn.neural_network import MLPClassifier
 import uproot
 import optuna
 import time
-from datetime import datetime
+from pathlib import Path
+
 
 #%% Open ROOT files
+base_dir = Path(__file__).resolve().parent
+folder = base_dir / "data"
+models_dir = base_dir / "models"
+export_dir = models_dir / "data"
 
-folder = r'D:/OneDrive/Documents/Universiteit Utrecht/Masters/Computational Aspects of Machine Learning/PR4/'
-kaons   = uproot.open(folder+r"Kaons.root")
-pions   = uproot.open(folder+r"Pions.root")
-protons = uproot.open(folder+r"Protons.root")
-electrons = uproot.open(folder+r"Electrons.root")
-deuterons = uproot.open(folder+r"Deuterons.root")
+#folder = r'/data'
+kaons   = uproot.open(folder / "Kaons.root")
+pions   = uproot.open(folder / "Pions.root")
+protons = uproot.open(folder / "Protons.root")
+electrons = uproot.open(folder / "Electrons.root")
+deuterons = uproot.open(folder / "Deuterons.root")
 
 #%% Creating DataFrames from ROOT files
 def extract_data(particle):
@@ -195,7 +200,8 @@ def train_model(train_df, train_target, model, name):
     start = time.time()
     clf = model.fit(train_df, train_target)
     end = time.time()
-    np.save(r"D:/OneDrive/Documents/Universiteit Utrecht/Masters/Computational Aspects of Machine Learning/PR4/models/"+f"{name}.npy", clf)
+    models_dir = base_dir / "models"
+    np.save(models_dir / f"{name}.npy", clf)
     print("Training complete")
     print(f"Duration: {(end-start)/60:.0f} min and {(end-start)%60:.1f} sec")
     print("--------------------------------------------------")
@@ -231,47 +237,48 @@ if train_models:
         models_high[title_list[i]] = clf_high
         models_full[title_list[i]] = clf
         
-    joblib.dump(models_low, folder+r"models/trained_models_LowMomentum")
-    joblib.dump(models_high, folder+r"models/trained_models_HighMomentum")
-    joblib.dump(models_full, folder+r"models/trained_models_FullMomentum")
+    joblib.dump(models_low,  models_dir / "trained_models_LowMomentum")
+    joblib.dump(models_high, models_dir / "trained_models_HighMomentum")
+    joblib.dump(models_full, models_dir / "trained_models_FullMomentum")
     
-    low_train_df.to_csv(folder+r"models/data/low_train_df.csv", header=True, index=False)
-    low_train_trg.to_csv(folder+r"models/data/low_train_trg.csv", header=True, index=False)
-    low_test_df.to_csv(folder+r"models/data/low_test_df.csv", header=True, index=False)
-    low_test_trg.to_csv(folder+r"models/data/low_test_trg.csv", header=True, index=False)
     
-    high_train_df.to_csv(folder+r"models/data/high_train_df.csv", header=True, index=False)
-    high_train_trg.to_csv(folder+r"models/data/high_train_trg.csv", header=True, index=False)
-    high_test_df.to_csv(folder+r"models/data/high_test_df.csv", header=True, index=False)
-    high_test_trg.to_csv(folder+r"models/data/high_test_trg.csv", header=True, index=False)
-    
-    full_train_df.to_csv(folder+r"models/data/full_train_df.csv", header=True, index=False)
-    full_train_trg.to_csv(folder+r"models/data/full_train_trg.csv", header=True, index=False)
-    full_test_df.to_csv(folder+r"models/data/full_test_df.csv", header=True, index=False)
-    full_test_trg.to_csv(folder+r"models/data/full_test_trg.csv", header=True, index=False)
+    low_train_df.to_csv(export_dir / "low_train_df.csv", header=True, index=False)
+    low_train_trg.to_csv(export_dir / "low_train_trg.csv", header=True, index=False)
+    low_test_df.to_csv(export_dir / "low_test_df.csv", header=True, index=False)
+    low_test_trg.to_csv(export_dir / "low_test_trg.csv", header=True, index=False)
+
+    high_train_df.to_csv(export_dir / "high_train_df.csv", header=True, index=False)
+    high_train_trg.to_csv(export_dir / "high_train_trg.csv", header=True, index=False)
+    high_test_df.to_csv(export_dir / "high_test_df.csv", header=True, index=False)
+    high_test_trg.to_csv(export_dir / "high_test_trg.csv", header=True, index=False)
+
+    full_train_df.to_csv(export_dir / "full_train_df.csv", header=True, index=False)
+    full_train_trg.to_csv(export_dir / "full_train_trg.csv", header=True, index=False)
+    full_test_df.to_csv(export_dir / "full_test_df.csv", header=True, index=False)
+    full_test_trg.to_csv(export_dir / "full_test_trg.csv", header=True, index=False)
 
     print("All models trained and saved")
     print("Training ended at   :", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         
-#%% Load trained models and load training/testing data
-models_low = joblib.load(folder+r"models/trained_models_LowMomentum") 
-models_high = joblib.load(folder+r"models/trained_models_HighMomentum")
-models_full = joblib.load(folder+r"models/trained_models_FullMomentum")
+# %% Load trained models and load training/testing data
+models_low = joblib.load(models_dir / "trained_models_LowMomentum") 
+models_high = joblib.load(models_dir / "trained_models_HighMomentum")
+models_full = joblib.load(models_dir / "trained_models_FullMomentum")
 
-low_train_df = pd.read_csv(folder+r"models/data/low_train_df.csv")
-low_train_trg = pd.read_csv(folder+r"models/data/low_train_trg.csv")
-low_test_df = pd.read_csv(folder+r"models/data/low_test_df.csv")
-low_test_trg = pd.read_csv(folder+r"models/data/low_test_trg.csv")
+low_train_df = pd.read_csv(export_dir / "low_train_df.csv")
+low_train_trg = pd.read_csv(export_dir / "low_train_trg.csv")
+low_test_df = pd.read_csv(export_dir / "low_test_df.csv")
+low_test_trg = pd.read_csv(export_dir / "low_test_trg.csv")
 
-high_train_df = pd.read_csv(folder+r"models/data/high_train_df.csv")
-high_train_trg = pd.read_csv(folder+r"models/data/high_train_trg.csv")
-high_test_df = pd.read_csv(folder+r"models/data/high_test_df.csv")
-high_test_trg = pd.read_csv(folder+r"models/data/high_test_trg.csv")
+high_train_df = pd.read_csv(export_dir / "high_train_df.csv")
+high_train_trg = pd.read_csv(export_dir / "high_train_trg.csv")
+high_test_df = pd.read_csv(export_dir / "high_test_df.csv")
+high_test_trg = pd.read_csv(export_dir / "high_test_trg.csv")
 
-full_train_df = pd.read_csv(folder+r"models/data/full_train_df.csv")
-full_train_trg = pd.read_csv(folder+r"models/data/full_train_trg.csv")
-full_test_df = pd.read_csv(folder+r"models/data/full_test_df.csv")
-full_test_trg = pd.read_csv(folder+r"models/data/full_test_trg.csv")
+full_train_df = pd.read_csv(export_dir / "full_train_df.csv")
+full_train_trg = pd.read_csv(export_dir / "full_train_trg.csv")
+full_test_df = pd.read_csv(export_dir / "full_test_df.csv")
+full_test_trg = pd.read_csv(export_dir / "full_test_trg.csv")
 
 #%% Plotting training results 
 
@@ -315,7 +322,7 @@ for i in model_names:
     ax[2].set_title(f"Full Momentum\nTest Accuracy: {acc_full:.2f}")
 
     fig.suptitle(f"Confusion Matrices for {i}")
-    plt.savefig(folder+f"models/Confusion_Matrix_{i}.png", dpi=500)
+    plt.savefig(models_dir / f"Confusion_Matrix_{i}.png", dpi=500)
 
         # ax[0].set_xticklabels("True Label")
         # ax[0].set_ybels("Predicted Label")
