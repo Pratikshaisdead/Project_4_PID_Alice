@@ -1,5 +1,4 @@
 #%% Importing libraries
-
 import numpy as np
 import pandas as pd 
 
@@ -7,11 +6,13 @@ import matplotlib
 matplotlib.use("QtAgg")
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
+plt.style.use("default")
 
 import sklearn
 from sklearn.utils import shuffle 
 from sklearn import preprocessing as pp
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score
 import joblib
 
 from sklearn.tree import DecisionTreeClassifier
@@ -21,21 +22,18 @@ from sklearn.neural_network import MLPClassifier
 import uproot
 import optuna
 import time
+from datetime import datetime
 from pathlib import Path
-
+import os 
 
 #%% Open ROOT files
-base_dir = Path(__file__).resolve().parent
-folder = base_dir / "data"
-models_dir = base_dir / "models"
-export_dir = models_dir / "data"
 
-#folder = r'/data'
-kaons   = uproot.open(folder / "Kaons.root")
-pions   = uproot.open(folder / "Pions.root")
-protons = uproot.open(folder / "Protons.root")
-electrons = uproot.open(folder / "Electrons.root")
-deuterons = uproot.open(folder / "Deuterons.root")
+folder = r'D:/OneDrive/Documents/Universiteit Utrecht/Masters/Computational Aspects of Machine Learning/PR4/'
+kaons   = uproot.open(folder+r"Kaons.root")
+pions   = uproot.open(folder+r"Pions.root")
+protons = uproot.open(folder+r"Protons.root")
+electrons = uproot.open(folder+r"Electrons.root")
+deuterons = uproot.open(folder+r"Deuterons.root")
 
 #%% Creating DataFrames from ROOT files
 def extract_data(particle):
@@ -68,7 +66,7 @@ def build_dataframe(particles_dic):
         frames.append(temp)
     return pd.concat(frames, ignore_index=True)
 
-def cutoff(df, variable, cutoff):
+def cutoff_func(df, variable, cutoff):
     low_df = df[df[variable]<cutoff]
     high_df = df[df[variable]>=cutoff]
     return low_df, high_df
@@ -82,7 +80,28 @@ particles = {"kaons": extract_data(kaons),
 particle_df = build_dataframe(particles)
 
 # low_momentum_df, high_momentum_df = cutoff(particle_df, "pT", 1.0)
+#%% Plot histogram of data as function of variable 
+def plot_histogram(variable, df, bins=100): 
+    plt.ion()
+    fig, ax = plt.subplots(figsize=(8,6))
+    
+    
+    ax.hist(df[variable], bins=bins, alpha=0.5, density=True)
+        
+    ax.set_xlabel(variable)
+    ax.set_ylabel("Density")
+    ax.set_title(f"Histogram of {variable}")
+    ax.legend()
+    # ax.grid(alpha=0.4)
+    ax.grid(which="minor", alpha=0.4)
+    ax.set_axisbelow(True)
+    ax.minorticks_on()
+    # ax.set_xscale("log")
+    ax.set_yscale("log")
+    
+    plt.show()
 
+plot_histogram("pT", particle_df, bins=200)
 #%% Plot data from ROOT files
 
 def plot_from_df(variable_x, variable_y, df,save_appendix=""):
@@ -137,7 +156,7 @@ def plot_from_df(variable_x, variable_y, df,save_appendix=""):
     end = time.time()
     print(end-start)
 
-# plot_from_df("pT", "dEdxTPC", particle_df)
+plot_from_df("pT", "dEdxTPC", particle_df)
 # plot_from_df("pT", "dEdxTPC", low_momentum_df,"_LowMomentum")
 # plot_from_df("pT", "dEdxTPC", high_momentum_df,"_HighMomentum")
 
@@ -158,9 +177,9 @@ def particle2int(x, inverse=False):
         x[x == "deuterons"] = 4
     return x
 
-def training_data(df, training_var, train_per):
+def training_data(df, training_var, train_per, cutoff):
     #Splitting the DataFrame into a low momentum and a high momentum DataFrame
-    low_df, high_df = cutoff(df, "pT", 0.5)
+    low_df, high_df = cutoff_func(df, "pT", cutoff)
     lim_low = int(len(low_df)*train_per)
     lim_high = int(len(high_df)*train_per)
     
@@ -197,88 +216,105 @@ def training_data(df, training_var, train_per):
 
 def train_model(train_df, train_target, model, name):
     print(f"Training {name} starting")
+    print(f"Time:", datetime.now().strftime("%Y-%m-%d %H:%M:%S")) 
     start = time.time()
     clf = model.fit(train_df, train_target)
     end = time.time()
-    models_dir = base_dir / "models"
-    np.save(models_dir / f"{name}.npy", clf)
+    np.save(r"D:/OneDrive/Documents/Universiteit Utrecht/Masters/Computational Aspects of Machine Learning/PR4/models/"+f"{name}.npy", clf)
     print("Training complete")
     print(f"Duration: {(end-start)/60:.0f} min and {(end-start)%60:.1f} sec")
     print("--------------------------------------------------")
     return clf
 
-train_models = False
+train_models = True
+cutoff_arr = np.linspace(0.2, 0.6, 21)  # Cutoff values to try
 
 if train_models:
-    dtc = DecisionTreeClassifier(random_state=0)
-    rfc = RandomForestClassifier(random_state=0)
-    gbc = GradientBoostingClassifier(random_state=0)
-    abc = AdaBoostClassifier(n_estimators=100, random_state=0)
-    mlpc = MLPClassifier(random_state=1, max_iter=300)
-    
-    cls_list = [dtc, rfc, gbc, abc, mlpc]
-    title_list = ["dtc",  "rfc", "gbc", "abc", "mlpc"]
-    models_full = {}
-    models_low = {}
-    models_high = {}
-    
-    low_train_df, low_train_trg, low_test_df, low_test_trg, \
-    high_train_df, high_train_trg, high_test_df, high_test_trg, \
-    full_train_df, full_train_trg, full_test_df, full_test_trg = training_data(particle_df, ["pT", "dEdxTPC", "p", "dEdxITS", "eta", "phi"], 0.9)
-    print("Training started at :", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    print("Training data created")
-    print("--------------------------------------------------")
-    
-    for i in range(0,len(cls_list)):
-        clf_low = train_model(low_train_df, low_train_trg, cls_list[i], f"{title_list[i]}_LowMomentum")
-        clf_high = train_model(high_train_df, high_train_trg, cls_list[i], f"{title_list[i]}_HighMomentum")
-        clf = train_model(full_train_df, full_train_trg, cls_list[i], f"{title_list[i]}_FullMomentum")
-        models_low[title_list[i]] = clf_low
-        models_high[title_list[i]] = clf_high
-        models_full[title_list[i]] = clf
+    for k_cutoff in range(0,len(cutoff_arr)): 
+        cutoff_pT = cutoff_arr[k_cutoff]
+        print(f"Cutoff value: {cutoff_pT:.2f} GeV/c")
+
+        dtc = DecisionTreeClassifier(random_state=0)
+        rfc = RandomForestClassifier(random_state=0)
+        gbc = GradientBoostingClassifier(random_state=0)
+        abc = AdaBoostClassifier(n_estimators=100, random_state=0)
+        mlpc = MLPClassifier(random_state=1, max_iter=300)
         
-    joblib.dump(models_low,  models_dir / "trained_models_LowMomentum")
-    joblib.dump(models_high, models_dir / "trained_models_HighMomentum")
-    joblib.dump(models_full, models_dir / "trained_models_FullMomentum")
-    
-    
-    low_train_df.to_csv(export_dir / "low_train_df.csv", header=True, index=False)
-    low_train_trg.to_csv(export_dir / "low_train_trg.csv", header=True, index=False)
-    low_test_df.to_csv(export_dir / "low_test_df.csv", header=True, index=False)
-    low_test_trg.to_csv(export_dir / "low_test_trg.csv", header=True, index=False)
-
-    high_train_df.to_csv(export_dir / "high_train_df.csv", header=True, index=False)
-    high_train_trg.to_csv(export_dir / "high_train_trg.csv", header=True, index=False)
-    high_test_df.to_csv(export_dir / "high_test_df.csv", header=True, index=False)
-    high_test_trg.to_csv(export_dir / "high_test_trg.csv", header=True, index=False)
-
-    full_train_df.to_csv(export_dir / "full_train_df.csv", header=True, index=False)
-    full_train_trg.to_csv(export_dir / "full_train_trg.csv", header=True, index=False)
-    full_test_df.to_csv(export_dir / "full_test_df.csv", header=True, index=False)
-    full_test_trg.to_csv(export_dir / "full_test_trg.csv", header=True, index=False)
-
-    print("All models trained and saved")
-    print("Training ended at   :", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        cls_list = [dtc, rfc, gbc, abc, mlpc]
+        title_list = ["dtc",  "rfc", "gbc", "abc", "mlpc"]
+        models_full = {}
+        models_low = {}
+        models_high = {}
         
-# %% Load trained models and load training/testing data
-models_low = joblib.load(models_dir / "trained_models_LowMomentum") 
-models_high = joblib.load(models_dir / "trained_models_HighMomentum")
-models_full = joblib.load(models_dir / "trained_models_FullMomentum")
+        low_train_df, low_train_trg, low_test_df, low_test_trg, \
+        high_train_df, high_train_trg, high_test_df, high_test_trg, \
+        full_train_df, full_train_trg, full_test_df, full_test_trg = training_data(particle_df, 
+                                                                                   ["pT", "dEdxTPC", "p", "dEdxITS", "eta", "phi"], 
+                                                                                   0.2, # Training percentage
+                                                                                   cutoff_pT)
+        print("Training started at :", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        print("Training data created")
+        print("--------------------------------------------------")
+        
+        for i in range(0,len(cls_list)):
+        # for i in range(0,1):
+            clf_low = train_model(low_train_df, low_train_trg, cls_list[i], f"{title_list[i]}_LowMomentum_Cutoff={cutoff_pT:.3f}")
+            clf_high = train_model(high_train_df, high_train_trg, cls_list[i], f"{title_list[i]}_HighMomentum_Cutoff={cutoff_pT:.3f}")
+            if k_cutoff==0: 
+                clf = train_model(full_train_df, full_train_trg, cls_list[i], f"{title_list[i]}_FullMomentum")
+            models_low[title_list[i]] = clf_low
+            models_high[title_list[i]] = clf_high
+            models_full[title_list[i]] = clf
+        
+        cutoff_folder = f"cutoff={cutoff_pT:.3f}/"
+        Path(folder+r"models/cutoff/"+cutoff_folder).mkdir(parents=True, exist_ok=True)
+        print("Saving trained models and data...")
 
-low_train_df = pd.read_csv(export_dir / "low_train_df.csv")
-low_train_trg = pd.read_csv(export_dir / "low_train_trg.csv")
-low_test_df = pd.read_csv(export_dir / "low_test_df.csv")
-low_test_trg = pd.read_csv(export_dir / "low_test_trg.csv")
+        joblib.dump(models_low, folder+r"models/cutoff/"+cutoff_folder+r"/trained_models_LowMomentum")
+        joblib.dump(models_high, folder+r"models/cutoff/"+cutoff_folder+r"/trained_models_HighMomentum")
+        if k_cutoff ==0:
+            joblib.dump(models_full, folder+r"models/cutoff/"+cutoff_folder+r"/trained_models_FullMomentum")
+        
+        # Saving training and testing data 
+        # Commented out to to speed up testing when not retraining training data for cutoff 
 
-high_train_df = pd.read_csv(export_dir / "high_train_df.csv")
-high_train_trg = pd.read_csv(export_dir / "high_train_trg.csv")
-high_test_df = pd.read_csv(export_dir / "high_test_df.csv")
-high_test_trg = pd.read_csv(export_dir / "high_test_trg.csv")
+        # low_train_df.to_csv(folder+r"models/data/low_train_df.csv", header=True, index=False)
+        # low_train_trg.to_csv(folder+r"models/data/low_train_trg.csv", header=True, index=False)
+        # low_test_df.to_csv(folder+r"models/data/low_test_df.csv", header=True, index=False)
+        # low_test_trg.to_csv(folder+r"models/data/low_test_trg.csv", header=True, index=False)
+        
+        # high_train_df.to_csv(folder+r"models/data/high_train_df.csv", header=True, index=False)
+        # high_train_trg.to_csv(folder+r"models/data/high_train_trg.csv", header=True, index=False)
+        # high_test_df.to_csv(folder+r"models/data/high_test_df.csv", header=True, index=False)
+        # high_test_trg.to_csv(folder+r"models/data/high_test_trg.csv", header=True, index=False)
+        
+            full_train_df.to_csv(folder+r"models/cutoff/data/full_train_df.csv", header=True, index=False)
+            full_train_trg.to_csv(folder+r"models/cutoff/data/full_train_trg.csv", header=True, index=False)
+            full_test_df.to_csv(folder+r"models/cutoff/data/full_test_df.csv", header=True, index=False)
+            full_test_trg.to_csv(folder+r"models/cutoff/data/full_test_trg.csv", header=True, index=False)
 
-full_train_df = pd.read_csv(export_dir / "full_train_df.csv")
-full_train_trg = pd.read_csv(export_dir / "full_train_trg.csv")
-full_test_df = pd.read_csv(export_dir / "full_test_df.csv")
-full_test_trg = pd.read_csv(export_dir / "full_test_trg.csv")
+        print("All models trained and saved")
+        print("Training ended at   :", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        
+#%% Load trained models and load training/testing data
+models_low = joblib.load(folder+r"models/trained_models_LowMomentum") 
+models_high = joblib.load(folder+r"models/trained_models_HighMomentum")
+models_full = joblib.load(folder+r"models/trained_models_FullMomentum")
+
+low_train_df = pd.read_csv(folder+r"models/data/low_train_df.csv")
+low_train_trg = pd.read_csv(folder+r"models/data/low_train_trg.csv")
+low_test_df = pd.read_csv(folder+r"models/data/low_test_df.csv")
+low_test_trg = pd.read_csv(folder+r"models/data/low_test_trg.csv")
+
+high_train_df = pd.read_csv(folder+r"models/data/high_train_df.csv")
+high_train_trg = pd.read_csv(folder+r"models/data/high_train_trg.csv")
+high_test_df = pd.read_csv(folder+r"models/data/high_test_df.csv")
+high_test_trg = pd.read_csv(folder+r"models/data/high_test_trg.csv")
+
+full_train_df = pd.read_csv(folder+r"models/data/full_train_df.csv")
+full_train_trg = pd.read_csv(folder+r"models/data/full_train_trg.csv")
+full_test_df = pd.read_csv(folder+r"models/data/full_test_df.csv")
+full_test_trg = pd.read_csv(folder+r"models/data/full_test_trg.csv")
 
 #%% Plotting training results 
 
@@ -309,20 +345,20 @@ for i in model_names:
     sklearn.metrics.ConfusionMatrixDisplay(c_matrix_low).plot(cmap="Blues", ax=ax[0], colorbar=False)
     ax[0].set_xticklabels(particles, rotation=45)
     ax[0].set_yticklabels(particles, rotation=45)
-    ax[0].set_title(f"Low Momentum\nTest Accuracy: {acc_low:.2f}")
+    ax[0].set_title(f"Low Momentum\nTest Accuracy: {acc_low:.4f}")
 
     sklearn.metrics.ConfusionMatrixDisplay(c_matrix_high).plot(cmap="Blues", ax=ax[1], colorbar=False)
     ax[1].set_xticklabels(particles, rotation=45)
     ax[1].set_yticklabels([], rotation=45)
-    ax[1].set_title(f"High Momentum\nTest Accuracy: {acc_high:.2f}")
+    ax[1].set_title(f"High Momentum\nTest Accuracy: {acc_high:.4f}")
 
     sklearn.metrics.ConfusionMatrixDisplay(c_matrix_full).plot(cmap="Blues", ax=ax[2], colorbar=False)
     ax[2].set_xticklabels(particles, rotation=45)
     ax[2].set_yticklabels([], rotation=45)
-    ax[2].set_title(f"Full Momentum\nTest Accuracy: {acc_full:.2f}")
+    ax[2].set_title(f"Full Momentum\nTest Accuracy: {acc_full:.4f}")
 
     fig.suptitle(f"Confusion Matrices for {i}")
-    plt.savefig(models_dir / f"Confusion_Matrix_{i}.png", dpi=500)
+    plt.savefig(folder+f"models/Confusion_Matrix_{i}.png", dpi=500)
 
         # ax[0].set_xticklabels("True Label")
         # ax[0].set_ybels("Predicted Label")
@@ -332,6 +368,135 @@ for i in model_names:
         # ax[2].set_title(f"Full Momentum\nTest Accuracy: {acc_full:. 2f}")
         # plt.suptitle(f"Confusion Matrices for {i}")     
         # plt.savefig(folder+f"models/Confusion_Matrix_{i}.png", dpi=500)
+
+#%% Combine models 
+
+def combine_models(low_model, high_model, test_df, test_trg, cutoff):
+    # Mask for high and low momentum
+    low_mask = test_df["pT"]<cutoff
+    high_mask = test_df["pT"]>=cutoff
+
+    # Predictions
+    low_predictions = low_model.predict(test_df[low_mask])
+    high_predictions = high_model.predict(test_df[high_mask])
+
+    # True labels
+    low_true = test_trg[low_mask]
+    high_true = test_trg[high_mask]
+
+    # Combine in the SAME order
+    predictions = np.concatenate([low_predictions, high_predictions])
+    true_labels = np.concatenate([low_true, high_true])
+
+    accuracy = accuracy_score(true_labels, predictions)
+    accuracy_low = accuracy_score(low_true, low_predictions)
+    accuracy_high = accuracy_score(high_true, high_predictions)
+
+    return predictions, true_labels, accuracy, accuracy_low, accuracy_high
+
+
+folder = r'D:/OneDrive/Documents/Universiteit Utrecht/Masters/Computational Aspects of Machine Learning/PR4/'
+
+cutoff_arr = [
+    float(name.split("=")[1])
+    for name in os.listdir(folder+"models/cutoff/")
+    if name.startswith("cutoff=")
+]
+cutoff_arr = sorted(cutoff_arr)
+
+# Arrays to store accuracies
+dtc_arr = np.zeros((len(cutoff_arr),3))
+rfc_arr = np.zeros((len(cutoff_arr),3))
+gbc_arr = np.zeros((len(cutoff_arr),3))
+abc_arr = np.zeros((len(cutoff_arr),3))
+mlpc_arr = np.zeros((len(cutoff_arr),3))
+
+#load data
+full_test_df = pd.read_csv(folder+r"models/cutoff/data/full_test_df.csv")
+full_test_trg = pd.read_csv(folder+r"models/cutoff/data/full_test_trg.csv")
+full_test_df = full_test_df[:200000] # Limit size for faster testing
+full_test_trg = full_test_trg[:200000] # Limit size for faster testing
+
+for i in range(len(cutoff_arr)):
+    cutoff_pT = cutoff_arr[i]
+    #Load models 
+    low_models = joblib.load(folder+r"models/cutoff/" + f"cutoff={cutoff_pT:.3f}/trained_models_LowMomentum")
+    high_models = joblib.load(folder+r"models/cutoff/" + f"cutoff={cutoff_pT:.3f}/trained_models_HighMomentum")
+    
+    # Combine models and get accuracy
+    for model_name in low_models.keys():
+        predictions, true_labels, accuracy, accuracy_low, accuracy_high = combine_models(
+            low_models[model_name],
+            high_models[model_name],
+            full_test_df,
+            full_test_trg,
+            cutoff=cutoff_pT)
+        
+        if model_name == "dtc":
+            dtc_arr[i,0] = accuracy
+            dtc_arr[i,1] = accuracy_low
+            dtc_arr[i,2] = accuracy_high
+            print("dtc accuracy at cutoff {:.3f}: {:.4f}".format(cutoff_pT, accuracy))
+        elif model_name == "rfc":
+            rfc_arr[i,0] = accuracy
+            rfc_arr[i,1] = accuracy_low
+            rfc_arr[i,2] = accuracy_high
+            print("rfc accuracy at cutoff {:.3f}: {:.4f}".format(cutoff_pT, accuracy))
+        elif model_name == "gbc":
+            gbc_arr[i,0] = accuracy
+            gbc_arr[i,1] = accuracy_low
+            gbc_arr[i,2] = accuracy_high
+            print("gbc accuracy at cutoff {:.3f}: {:.4f}".format(cutoff_pT, accuracy))
+        elif model_name == "abc":
+            abc_arr[i,0] = accuracy
+            abc_arr[i,1] = accuracy_low
+            abc_arr[i,2] = accuracy_high
+            print("abc accuracy at cutoff {:.3f}: {:.4f}".format(cutoff_pT, accuracy))
+        elif model_name == "mlpc":
+            mlpc_arr[i,0] = accuracy
+            mlpc_arr[i,1] = accuracy_low
+            mlpc_arr[i,2] = accuracy_high
+            print("mlpc accuracy at cutoff {:.3f}: {:.4f}".format(cutoff_pT, accuracy))
+
+    print("--------------------------------------------------")
+
+#%%
+models_full = joblib.load(r"D:\OneDrive\Documents\Universiteit Utrecht\Masters\Computational Aspects of Machine Learning\PR4\models\cutoff\cutoff=0.200\trained_models_FullMomentum")
+# Accuracy default models
+for model_name in models_full.keys():
+    model = models_full[model_name]
+    accuracy = model.score(full_test_df, full_test_trg)
+    print(f"{model_name} default model accuracy: {accuracy:.4f}")
+
+plt.ion()
+fig, ax = plt.subplots(figsize=(10,6))
+ax.plot(cutoff_arr, dtc_arr[:,0], label="Decision Tree Classifier", color="tab:blue", marker="o")
+ax.plot(cutoff_arr, dtc_arr[:,1], label="Decision Tree Classifier Low Momentum", color="tab:blue", marker="x", alpha=0.3)
+ax.plot(cutoff_arr, dtc_arr[:,2], label="Decision Tree Classifier High Momentum", color="tab:blue", marker="^", alpha=0.3)
+
+ax.plot(cutoff_arr, rfc_arr[:,0], label="Random Forest Classifier", color="tab:orange", marker="o")
+ax.plot(cutoff_arr, rfc_arr[:,1], label="Random Forest Classifier Low Momentum", color="tab:orange", marker="x", alpha=0.3)
+ax.plot(cutoff_arr, rfc_arr[:,2], label="Random Forest Classifier High Momentum", color="tab:orange", marker="^", alpha=0.3)
+
+ax.plot(cutoff_arr, gbc_arr[:,0], label="Gradient Boosting Classifier", color="tab:green", marker="o")
+ax.plot(cutoff_arr, gbc_arr[:,1], label="Gradient Boosting Classifier Low Momentum", color="tab:green", marker="x", alpha=0.3)
+ax.plot(cutoff_arr, gbc_arr[:,2], label="Gradient Boosting Classifier High Momentum", color="tab:green", marker="^", alpha=0.3)
+
+ax.plot(cutoff_arr, abc_arr[:,0], label="AdaBoost Classifier", color="tab:red", marker="o")
+ax.plot(cutoff_arr, abc_arr[:,1], label="AdaBoost Classifier Low Momentum", color="tab:red", marker="x", alpha=0.3)
+ax.plot(cutoff_arr, abc_arr[:,2], label="AdaBoost Classifier High Momentum", color="tab:red", marker="^", alpha=0.3)
+
+ax.plot(cutoff_arr, mlpc_arr[:,0], label="Multi-layer Perceptron Classifier", color="tab:purple", marker="o")
+ax.plot(cutoff_arr, mlpc_arr[:,1], label="Multi-layer Perceptron Classifier Low Momentum", color="tab:purple", marker="x", alpha=0.3)
+ax.plot(cutoff_arr, mlpc_arr[:,2], label="Multi-layer Perceptron Classifier High Momentum", color="tab:purple", marker="^", alpha=0.3)
+
+# ax.set_xscale("log")
+ax.set_xlabel("Cutoff momentum (GeV/c)")
+ax.set_ylabel("Test Accuracy")
+ax.set_title("Combined Model Test Accuracy vs Cutoff Momentum")
+ax.legend()
+plt.show()
+#%%
 
 
 
@@ -395,3 +560,5 @@ for i in model_names:
 #     ax[1,i].set_title(f"Test accuracy: {acc_test:.2f}")
     
 #     print(f"{title_list[i]} complete")
+
+# %%
