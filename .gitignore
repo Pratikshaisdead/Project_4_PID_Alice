@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.ipynb_checkpoints/
+.venv/
+.vscode/
+.DS_Store
+*.npy
+*.png
+*.pdf
+*.root
+*.csv
+models/trained_models_FullMomentum
+models/trained_models_HighMomentum
+models/trained_models_LowMomentum
+full_trained.npy
