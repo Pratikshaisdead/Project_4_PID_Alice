@@ -162,3 +162,36 @@ for name, obj_func, train_x, train_y, test_x, test_y in regions:
         f.write(f"Region: {name}\nBest Params: {study.best_params}\nInitial Acc: {init_acc}\nFinal Acc: {final_acc}")
 
 print("\nAll regions optimized and expert models saved.")
+
+#%% Plotting confusion matrix of best models 
+best_model = joblib.load(best_model, models_dir / f"best_trained_MLPC_{name.lower()}.joblib")
+
+full_train_df = pd.read_csv(export_dir / "full_train_df.csv")
+full_train_trg = pd.read_csv(export_dir / "full_train_trg.csv")
+full_test_df = pd.read_csv(export_dir / "full_test_df.csv")
+full_test_trg = pd.read_csv(export_dir / "full_test_trg.csv")
+
+particles = list(full_test_trg["particle"].unique())
+
+# Creating confusion matrix using sklearn.metrics.confusion_matrix
+c_matrix_train =confusion_matrix(full_train_trg, model_full.predict(full_train_df), labels = particles, normalize='true')
+c_matrix_test = confusion_matrix(full_test_trg, model_full.predict(full_test_df), labels = particles, normalize='true')
+
+acc_train = best_model.score(full_train_df, full_train_trg)
+acc_test = best_model.score(full_test_df, full_test_trg)
+
+# Plotting confusion matrix for testing and training data
+plt.ion()   
+fig, ax = plt.subplots(1,2,figsize=(24,6))
+
+sklearn.metrics.ConfusionMatrixDisplay(c_matrix_train).plot(cmap="Blues", ax=ax[0], colorbar=False)
+ax[0].set_xticklabels(particles, rotation=45)
+ax[0].set_yticklabels(particles, rotation=45)
+ax[0].set_title(f"Training Accuracy: {acc_train:.4f}")
+
+sklearn.metrics.ConfusionMatrixDisplay(c_matrix_test).plot(cmap="Blues", ax=ax[0], colorbar=False)
+ax[0].set_xticklabels(particles, rotation=45)
+ax[0].set_yticklabels(particles, rotation=45)
+ax[0].set_title(f"Testing Accuracy: {acc_test:.4f}")
+
+plt.show()
