@@ -228,7 +228,9 @@ def train_model(train_df, train_target, model, name):
     start = time.time()
     clf = model.fit(train_df, train_target)
     end = time.time()
-    np.save(r"D:/OneDrive/Documents/Universiteit Utrecht/Masters/Computational Aspects of Machine Learning/PR4/models/"+f"{name}.npy", clf)
+    models_dir = base_dir / "models"
+    np.save(models_dir / f"{name}.npy", clf)
+    #np.save(r"D:/OneDrive/Documents/Universiteit Utrecht/Masters/Computational Aspects of Machine Learning/PR4/models/"+f"{name}.npy", clf)
     print("Training complete")
     print(f"Duration: {(end-start)/60:.0f} min and {(end-start)%60:.1f} sec")
     print("--------------------------------------------------")
