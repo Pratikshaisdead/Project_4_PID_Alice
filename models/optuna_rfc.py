@@ -60,11 +60,11 @@ y_full_test_flat = full_test_trg.values.ravel()
 
 def objective_rfc_low_mom(trial): 
     params = {
-        "n_estimators": trial.suggest_int("n_estimators", 20, 40, step=20),
-        "max_depth": trial.suggest_int("max_depth", 2, 100),
-        "min_samples_split": trial.suggest_int("min_samples_split", 2, 20),
-        "min_samples_leaf": trial.suggest_int("min_samples_leaf", 1, 20),
-        "criterion": trial.suggest_categorical("criterion", ["gini", "entropy"]),
+        "n_estimators": trial.suggest_int("n_estimators", 20, 400, step=20),
+        "max_depth": trial.suggest_int("max_depth", 10, 80),
+        "min_samples_split": trial.suggest_int("min_samples_split", 2, 10),
+        "min_samples_leaf": trial.suggest_int("min_samples_leaf", 1, 8),
+        "criterion": trial.suggest_categorical("criterion", ["gini", "entropy","log_loss"]),
         "random_state": 0, "n_jobs": -1
     }
     model = RandomForestClassifier(**params)
@@ -73,11 +73,11 @@ def objective_rfc_low_mom(trial):
 
 def objective_rfc_high_mom(trial): 
     params = {
-        "n_estimators": trial.suggest_int("n_estimators", 20, 40, step=20),
-        "max_depth": trial.suggest_int("max_depth", 2, 100),
-        "min_samples_split": trial.suggest_int("min_samples_split", 2, 20),
-        "min_samples_leaf": trial.suggest_int("min_samples_leaf", 1, 20),
-        "criterion": trial.suggest_categorical("criterion", ["gini", "entropy"]),
+        "n_estimators": trial.suggest_int("n_estimators", 20, 400, step=20),
+        "max_depth": trial.suggest_int("max_depth", 10, 80),
+        "min_samples_split": trial.suggest_int("min_samples_split", 2, 10),
+        "min_samples_leaf": trial.suggest_int("min_samples_leaf", 1, 8),
+        "criterion": trial.suggest_categorical("criterion", ["gini", "entropy","log_loss"]),
         "random_state": 0, "n_jobs": -1
     }
     model = RandomForestClassifier(**params)
@@ -86,16 +86,17 @@ def objective_rfc_high_mom(trial):
 
 def objective_rfc_full(trial): 
     params = {
-        "n_estimators": trial.suggest_int("n_estimators", 20, 40, step=20),
-        "max_depth": trial.suggest_int("max_depth", 2, 100),
-        "min_samples_split": trial.suggest_int("min_samples_split", 2, 20),
-        "min_samples_leaf": trial.suggest_int("min_samples_leaf", 1, 20),
-        "criterion": trial.suggest_categorical("criterion", ["gini", "entropy"]),
+        "n_estimators": trial.suggest_int("n_estimators", 20, 400, step=20),
+        "max_depth": trial.suggest_int("max_depth", 10, 80),
+        "min_samples_split": trial.suggest_int("min_samples_split", 2, 10),
+        "min_samples_leaf": trial.suggest_int("min_samples_leaf", 1, 8),
+        "criterion": trial.suggest_categorical("criterion", ["gini", "entropy","log_loss"]),
         "random_state": 0, "n_jobs": -1
     }
     model = RandomForestClassifier(**params)
     model.fit(full_train_df, y_full_train_flat)
     return model.score(full_test_df, y_full_test_flat)
+
 
 
 
