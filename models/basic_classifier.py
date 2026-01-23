@@ -28,7 +28,15 @@ import os
 
 #%% Open ROOT files
 
-folder = r'D:/OneDrive/Documents/Universiteit Utrecht/Masters/Computational Aspects of Machine Learning/PR4/'
+#folder = r'D:/OneDrive/Documents/Universiteit Utrecht/Masters/Computational Aspects of Machine Learning/PR4/'
+
+base_dir = Path(__file__).resolve().parent
+folder = base_dir / "data"
+models_dir = base_dir / "models"
+export_dir = models_dir / "data"
+
+folder = r'/data'
+
 kaons   = uproot.open(folder+r"Kaons.root")
 pions   = uproot.open(folder+r"Pions.root")
 protons = uproot.open(folder+r"Protons.root")
