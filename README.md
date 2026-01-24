@@ -1,6 +1,6 @@
 # Particle Identification of ALICE data
 
-in 2010 ALICE collected data which samples 200000 electrons, pions, kaons, protons and deutrons. These particles were acquired through various techniques like ${\mathrm{K}^{0}} <sub>_{\mathrm{S}}</sub> \rightarrow \pi^{+} \pi^{-}$ decays for pions, $\Lambda \rightarrow \mathrm{p} \pi^{-}$ decays for protons, $\mathrm{K}^{+} \rightarrow \mu^{+} \nu_{\mu}$ 's kink topology for kaons, $\gamma \rightarrow \mathrm{e}^{+} \mathrm{e}^{-}$ for electrons and deutrons were selected via tim-of-flight detectors. Recognizing which particle is which from collisions is important for data analysis. Thus the goal of this project is to build a multiclass classifier that is able to predict what the identity is of a particle in new data. We have tested various classifiers and optimzed the best classifier in our project. 
+In 2010 ALICE collected data which samples 200000 electrons, pions, kaons, protons and deutrons. These particles were acquired through various techniques like neutral kaon decays for pions, lambda decays for protons, positive kaon decay's kink topology for kaons, gamma decays for electrons and deutrons were selected via time-of-flight detectors. Recognizing which particle is which from collisions is important for data analysis. Thus the goal of this project is to build a multiclass classifier that is able to predict what the identity is of a particle in new data. We have tested various classifiers and optimzed the best classifier in our project. 
 
 ## Prerequisites
 
