@@ -24,7 +24,7 @@ y_test_raw = pd.read_csv(export_dir / f"{reg}_test_trg.csv").values.ravel().asty
 y_test = le.transform(y_test_raw)
 
 # 3. Generate Predictions
-y_pred = model.predict(X_test)
+y_pred = model.predict(X_test).astype(str)
 
 # 4. Create Boolean Masks for Correct/Incorrect
 correct_mask = (y_test == y_pred)
