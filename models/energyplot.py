@@ -7,8 +7,8 @@ from sklearn.preprocessing import LabelEncoder
 
 # 1. Path Setup
 base_dir = Path(__file__).resolve().parent
-models_dir = base_dir / "models"
-export_dir = models_dir / "data"
+#models_dir = base_dir / "models"
+#export_dir = models_dir / "data"
 
 # 2. Load Label Encoder and Data
 le = LabelEncoder()
