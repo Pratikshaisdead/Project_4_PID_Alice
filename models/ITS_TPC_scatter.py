@@ -19,11 +19,11 @@ import uproot
 import matplotlib.pyplot as plt
 
 
-kaons = uproot.open("Kaons.root")
-pions = uproot.open("Pions.root")
-protons = uproot.open("Protons.root")
-electrons = uproot.open("Electrons.root")
-deuterons = uproot.open("Deuterons.root")
+kaons = uproot.open("data/Kaons.root")
+pions = uproot.open("data/Pions.root")
+protons = uproot.open("data/Protons.root")
+electrons = uproot.open("data/Electrons.root")
+deuterons = uproot.open("data/Deuterons.root")
 
 myKaonTree = kaons["data;1"]
 myPionTree = pions["data;1"]
@@ -59,18 +59,18 @@ yd_11 = deuteronBranches['dEdxTPC']
 xd = deuteronBranches['pT']
 
 
-fig, ax = plt.subplots(ncols=2, nrows=1, figsize=(10, 5), layout="constrained")
+fig, ax = plt.subplots(ncols=2, nrows=1, figsize=(10, 5))
 
 
-ax[0].scatter(xpi, ypi_00, 0.1, c='navy', alpha = 0.4)
-ax[0].scatter(xp, yp_00, 0.1, c='navy', alpha = 0.4)
-ax[0].scatter(xk, yk_00, 0.1, c='navy', alpha = 0.4)
-ax[0].scatter(xd, yd_00, 0.1, c='navy', alpha = 0.4, label='other')
+ax[0].scatter(xpi, ypi_00, 0.1, c='purple', alpha = 0.4, label= 'pions')
+ax[0].scatter(xp, yp_00, 0.1, c='green', alpha = 0.4, label= 'protons')
+ax[0].scatter(xk, yk_00, 0.1, c='blue', alpha = 0.4, label= 'kaons')
+ax[0].scatter(xd, yd_00, 0.1, c='darkred', alpha = 0.4, label='deutrons')
 ax[0].scatter(xe, ye_00, 0.1, c='red', alpha = 0.4, label='electrons')
 
-ax[0].set_title('dEdxITS')
-ax[0].set_ylabel('dEdxITS')
-ax[0].set_xlabel('pT')
+#ax[0].set_title('dEdxITS')
+ax[0].set_ylabel(r'Energy loss $\mathrm{d}E/\mathrm{d}x$ (Gev/m) at ITS', fontsize = 12)
+ax[0].set_xlabel(r'Momentum p (GeV/c)', fontsize  = 12)
 
 ax[0].set_xscale('log')
 ax[0].set_yscale('log')
@@ -78,19 +78,23 @@ ax[0].grid(alpha = 0.4)
 ax[0].grid(which = "minor", alpha = 0.4)
 ax[0].set_axisbelow(True)
 ax[0].minorticks_on()
+ax[0].tick_params(axis='both', which='major', labelsize=10)
+ax[0].tick_params(axis='both', which='minor', labelsize=10)
+#ax[0].set_yticks(fontsize = 10)
+#ax[0].set_xticks(fontsize = 10)
 ax[0].legend(markerscale=10)
 
 
 
-ax[1].scatter(xpi, ypi_11, 0.1, c='navy', alpha = 0.4)
-ax[1].scatter(xp, yp_11, 0.1, c='navy', alpha = 0.4)
-ax[1].scatter(xk, yk_11, 0.1, c='navy', alpha = 0.4)
-ax[1].scatter(xd, yd_11, 0.1, c='navy', alpha = 0.4, label='other')
+ax[1].scatter(xpi, ypi_11, 0.1, c='purple', alpha = 0.44, label='pions')
+ax[1].scatter(xp, yp_11, 0.1, c='green', alpha = 0.44, label='protons')
+ax[1].scatter(xk, yk_11, 0.1, c='blue', alpha = 0.44, label='kaons')
+ax[1].scatter(xd, yd_11, 0.1, c='darkred', alpha = 0.4, label='deutrons')
 ax[1].scatter(xe, ye_11, 0.1, c='red', alpha = 0.4, label='electrons')
 
-ax[1].set_title('dEdxTPC')
-ax[1].set_ylabel('dEdxTPC')
-ax[1].set_xlabel('pT')
+#ax[1].set_title('$\mathrm{d}E\mathrm{d}x TPC$')
+ax[1].set_ylabel(r'Energy loss $\mathrm{d}E/\mathrm{d}x$ (Gev/m) at TPC', fontsize = 12)
+ax[1].set_xlabel(r'Momentum p (GeV/c)', fontsize = 12)
 
 ax[1].set_xscale('log')
 ax[1].set_yscale('log')
@@ -98,7 +102,11 @@ ax[1].grid(alpha = 0.4)
 ax[1].grid(which = "minor", alpha = 0.4)
 ax[1].set_axisbelow(True)
 ax[1].minorticks_on()
+ax[1].tick_params(axis='both', which='major', labelsize=10)
+ax[1].tick_params(axis='both', which='minor', labelsize=10)
 ax[1].legend(markerscale=10)
 
+
+fig.tight_layout(pad = 5)
 
 plt.show()
