@@ -12,15 +12,15 @@ export_dir = models_dir / "data"
 
 # 2. Load Label Encoder and Data
 le = LabelEncoder()
-full_trg = pd.read_csv(export_dir / "full_train_trg.csv")
+full_trg = pd.read_csv(models_dir / "full_train_trg.csv")
 le.fit(full_trg.values.ravel().astype(str))
 
 # Using the 'full' region for the example
 reg = "full"
 model = joblib.load(models_dir / f"final_fixed_MLPC_{reg}.joblib")
 
-X_test = pd.read_csv(export_dir / f"{reg}_test_df.csv")
-y_test_raw = pd.read_csv(export_dir / f"{reg}_test_trg.csv").values.ravel().astype(str)
+X_test = pd.read_csv(models_dir / f"{reg}_test_df.csv")
+y_test_raw = pd.read_csv(models_dir / f"{reg}_test_trg.csv").values.ravel().astype(str)
 y_test = le.transform(y_test_raw)
 
 # 3. Generate Predictions
