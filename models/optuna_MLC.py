@@ -133,21 +133,20 @@ for name, obj_func, train_x, train_y, test_x, test_y in regions:
     
     # Run optimization
     with parallel_backend("threading", n_jobs=-1):
-        study.optimize(obj_func, n_trials=20)
+        study.optimize(obj_func, n_trials=24)
 
     # Final Training 
    
-    best_model = MLPClassifier(**study.best_params, random_state=0)
+    #best_model = MLPClassifier(**study.best_params, random_state=0)
     best_model.fit(train_x, train_y)
-   # best_model = MLPClassifier(
-  #      **study.best_params,
- #       hidden_layer_sizes=(100, 50),
- #       solver="sgd",
- #       learning_rate="adaptive",
- #       max_iter=500,        # Increased to ensure full convergence
- ##       early_stopping=True,
-  #      random_state=0
-  #  )
+    best_model = MLPClassifier(
+        **study.best_params,
+        hidden_layer_sizes=(100, 50),
+        solver="sgd",
+        learning_rate="adaptive",
+        max_iter=500,        
+        random_state=0
+    )
     best_model.fit(train_x, train_y)
     
     
