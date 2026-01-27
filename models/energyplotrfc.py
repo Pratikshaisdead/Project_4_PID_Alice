@@ -11,7 +11,7 @@ export_dir = models_dir / "data"
 
 # 2. Load RFC Model and Data
 # Change 'final_rfc_model.joblib' to whatever your RFC filename is
-rfc_model_path = models_dir / "best_trained_rfc1_full.joblib" 
+rfc_model_path = models_dir / "best_trained_rfc_full.joblib" 
 rfc = joblib.load(rfc_model_path)
 
 # Using 'full' data for the visualization
@@ -36,20 +36,20 @@ tpc = X_test['dEdxTPC']
 fig, ax = plt.subplots(1, 2, figsize=(15, 6), layout="constrained")
 
 # ITS Plot
-ax[0].scatter(pt[correct_mask], its[correct_mask], s=0.5, c='navy', alpha=0.2, label='Correct')
-ax[0].scatter(pt[incorrect_mask], its[incorrect_mask], s=1.5, c='red', alpha=0.7, label='Incorrect')
-ax[0].set_title("RFC: dEdxITS vs pT")
-ax[0].set_ylabel("dEdxITS")
+ax[0].scatter(pt[correct_mask], its[correct_mask], s=0.4, c='navy', alpha=0.3, label='Correctly Identified')
+ax[0].scatter(pt[incorrect_mask], its[incorrect_mask], s=0.4, c='red', alpha=0.8, label='False Identification')
+ax[0].set_title("Energy loss in ITS (RFC)")
+ax[0].set_ylabel("dE/dx ITS")
 
 # TPC Plot
-ax[1].scatter(pt[correct_mask], tpc[correct_mask], s=0.5, c='navy', alpha=0.2, label='Correct')
-ax[1].scatter(pt[incorrect_mask], tpc[incorrect_mask], s=1.5, c='red', alpha=0.7, label='Incorrect')
-ax[1].set_title("RFC: dEdxTPC vs pT")
-ax[1].set_ylabel("dEdxTPC")
+ax[1].scatter(pt[correct_mask], tpc[correct_mask], s=0.4, c='navy', alpha=0.3, label='Correctly Identified')
+ax[1].scatter(pt[incorrect_mask], tpc[incorrect_mask], s=0.4, c='red', alpha=0.8, label='False Identification')
+ax[1].set_title("Energy loss in TPC (RFC)")
+ax[1].set_ylabel("dE/dx TPC")
 
 # Formatting for both
 for a in ax:
-    a.set_xlabel("pT")
+    a.set_xlabel("Transverse momentum p_T (GeV/c)")
     a.set_xscale('log')
     a.set_yscale('log')
     a.grid(True, which="both", alpha=0.3)
