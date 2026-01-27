@@ -40,22 +40,22 @@ dedx_tpc = X_test['dEdxTPC']
 fig, ax = plt.subplots(ncols=2, nrows=1, figsize=(14, 6), layout="constrained")
 
 # Titles and Labels
-titles = ['dEdxITS vs pT', 'dEdxTPC vs pT']
+titles = ['Energy loss in ITS (MLPC)', 'Energy loss in TPC (MLPC)']
 y_datas = [dedx_its, dedx_tpc]
-y_labels = ['dEdxITS', 'dEdxTPC']
+y_labels = ['dE/dx ITS', 'dE/dx TPC']
 
 for i in range(2):
     # Plot Correct Identifications (Navy)
     ax[i].scatter(pt[correct_mask], y_datas[i][correct_mask], 
-                  s=0.5, c='navy', alpha=0.3, label='Correctly Identified')
+                  s=0.3, c='navy', alpha=0.4, label='Correctly Identified')
     
     # Plot False Identifications (Red) - Plotted second so they stay on top
     ax[i].scatter(pt[incorrect_mask], y_datas[i][incorrect_mask], 
-                  s=1.0, c='red', alpha=0.8, label='False Identification')
+                  s=0.5, c='red', alpha=0.4, label='False Identification')
 
     ax[i].set_title(titles[i])
     ax[i].set_ylabel(y_labels[i])
-    ax[i].set_xlabel('pT')
+    ax[i].set_xlabel('Transverse momentum p_T (GeV/c)')
     ax[i].set_xscale('log')
     ax[i].set_yscale('log')
     ax[i].grid(True, which="both", alpha=0.3)
