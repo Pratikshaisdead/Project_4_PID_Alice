@@ -60,11 +60,11 @@ y_full_test_flat = full_test_trg.values.ravel()
 
 def objective_rfc_low_mom(trial): 
     params = {
-        "n_estimators": trial.suggest_int("n_estimators", 20, 400, step=20),
-        "max_depth": trial.suggest_int("max_depth", 10, 80),
-        "min_samples_split": trial.suggest_int("min_samples_split", 2, 10),
-        "min_samples_leaf": trial.suggest_int("min_samples_leaf", 1, 8),
-        "criterion": trial.suggest_categorical("criterion", ["gini", "entropy","log_loss"]),
+        "n_estimators": trial.suggest_int("n_estimators", 20, 40, step=20),
+        "max_depth": trial.suggest_int("max_depth", 2, 100),
+        "min_samples_split": trial.suggest_int("min_samples_split", 2, 20),
+        "min_samples_leaf": trial.suggest_int("min_samples_leaf", 1, 20),
+        "criterion": trial.suggest_categorical("criterion", ["gini", "entropy"]),
         "random_state": 0, "n_jobs": -1
     }
     model = RandomForestClassifier(**params)
@@ -73,11 +73,11 @@ def objective_rfc_low_mom(trial):
 
 def objective_rfc_high_mom(trial): 
     params = {
-        "n_estimators": trial.suggest_int("n_estimators", 20, 400, step=20),
-        "max_depth": trial.suggest_int("max_depth", 10, 80),
-        "min_samples_split": trial.suggest_int("min_samples_split", 2, 10),
-        "min_samples_leaf": trial.suggest_int("min_samples_leaf", 1, 8),
-        "criterion": trial.suggest_categorical("criterion", ["gini", "entropy","log_loss"]),
+        "n_estimators": trial.suggest_int("n_estimators", 20, 40, step=20),
+        "max_depth": trial.suggest_int("max_depth", 2, 100),
+        "min_samples_split": trial.suggest_int("min_samples_split", 2, 20),
+        "min_samples_leaf": trial.suggest_int("min_samples_leaf", 1, 20),
+        "criterion": trial.suggest_categorical("criterion", ["gini", "entropy"]),
         "random_state": 0, "n_jobs": -1
     }
     model = RandomForestClassifier(**params)
@@ -86,17 +86,16 @@ def objective_rfc_high_mom(trial):
 
 def objective_rfc_full(trial): 
     params = {
-        "n_estimators": trial.suggest_int("n_estimators", 20, 400, step=20),
-        "max_depth": trial.suggest_int("max_depth", 10, 80),
-        "min_samples_split": trial.suggest_int("min_samples_split", 2, 10),
-        "min_samples_leaf": trial.suggest_int("min_samples_leaf", 1, 8),
-        "criterion": trial.suggest_categorical("criterion", ["gini", "entropy","log_loss"]),
+        "n_estimators": trial.suggest_int("n_estimators", 20, 40, step=20),
+        "max_depth": trial.suggest_int("max_depth", 2, 100),
+        "min_samples_split": trial.suggest_int("min_samples_split", 2, 20),
+        "min_samples_leaf": trial.suggest_int("min_samples_leaf", 1, 20),
+        "criterion": trial.suggest_categorical("criterion", ["gini", "entropy"]),
         "random_state": 0, "n_jobs": -1
     }
     model = RandomForestClassifier(**params)
     model.fit(full_train_df, y_full_train_flat)
     return model.score(full_test_df, y_full_test_flat)
-
 
 
 
@@ -135,3 +134,36 @@ for name, obj_func, train_x, train_y, test_x, test_y in regions:
         f.write(f"Region: {name}\nBest Params: {study.best_params}\nInitial Acc: {init_acc}\nFinal Acc: {final_acc}")
 
 print("\nAll regions optimized and expert models saved.")
+
+#%% Plotting confusion matrix of best models 
+best_model = joblib.load(best_model, models_dir / f"best_trained_rfc_{name.lower()}.joblib")
+
+full_train_df = pd.read_csv(export_dir / "full_train_df.csv")
+full_train_trg = pd.read_csv(export_dir / "full_train_trg.csv")
+full_test_df = pd.read_csv(export_dir / "full_test_df.csv")
+full_test_trg = pd.read_csv(export_dir / "full_test_trg.csv")
+
+particles = list(full_test_trg["particle"].unique())
+
+# Creating confusion matrix using sklearn.metrics.confusion_matrix
+c_matrix_train =confusion_matrix(full_train_trg, model_full.predict(full_train_df), labels = particles, normalize='true')
+c_matrix_test = confusion_matrix(full_test_trg, model_full.predict(full_test_df), labels = particles, normalize='true')
+
+acc_train = best_model.score(full_train_df, full_train_trg)
+acc_test = best_model.score(full_test_df, full_test_trg)
+
+# Plotting confusion matrix for testing and training data
+plt.ion()   
+fig, ax = plt.subplots(1,2,figsize=(24,6))
+
+sklearn.metrics.ConfusionMatrixDisplay(c_matrix_train).plot(cmap="Blues", ax=ax[0], colorbar=False)
+ax[0].set_xticklabels(particles, rotation=45)
+ax[0].set_yticklabels(particles, rotation=45)
+ax[0].set_title(f"Training Accuracy: {acc_train:.4f}")
+
+sklearn.metrics.ConfusionMatrixDisplay(c_matrix_test).plot(cmap="Blues", ax=ax[0], colorbar=False)
+ax[0].set_xticklabels(particles, rotation=45)
+ax[0].set_yticklabels(particles, rotation=45)
+ax[0].set_title(f"Testing Accuracy: {acc_test:.4f}")
+
+
